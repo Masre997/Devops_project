@@ -14,23 +14,25 @@ pipeline {
             }
         }
 
-        stage('Build Docker Image') {
-            steps {
-                script {
-                    // Build the image inside the 'app' directory
-                    dir('app') {
-                        sh "docker build -t ${DOCKER_IMAGE}:${DOCKER_TAG} ."
-                        sh "docker build -t ${DOCKER_IMAGE}:latest ."
-                    }
-                }
-            }
-        }
-
-        stage('Push to Docker Hub') {
+        stage('Build & Push Docker Image') {
             steps {
                 script {
                     withCredentials([usernamePassword(credentialsId: 'docker-hub-credentials', passwordVariable: 'DOCKER_PASSWORD', usernameVariable: 'DOCKER_USERNAME')]) {
-                        sh "echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin"
+                        
+                        // 1. CLEAR OLD CREDENTIALS & LOGIN FRESH
+                        // We log in BEFORE building to fix the "401 Unauthorized" error on pull
+                        sh "docker logout"
+                        sh 'echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin'
+                        
+                        // 2. BUILD THE IMAGE
+                        dir('app') {
+                            echo "Building Docker Image..."
+                            sh "docker build -t ${DOCKER_IMAGE}:${DOCKER_TAG} ."
+                            sh "docker build -t ${DOCKER_IMAGE}:latest ."
+                        }
+                        
+                        // 3. PUSH THE IMAGE
+                        echo "Pushing to Docker Hub..."
                         sh "docker push ${DOCKER_IMAGE}:${DOCKER_TAG}"
                         sh "docker push ${DOCKER_IMAGE}:latest"
                     }
