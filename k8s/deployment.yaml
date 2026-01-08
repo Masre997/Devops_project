@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: devops-app
+spec:
+  replicas: 2  # Run 2 copies of the app
+  selector:
+    matchLabels:
+      app: devops-app
+  template:
+    metadata:
+      labels:
+        app: devops-app
+      annotations:
+        # These annotations tell Prometheus to scrape this pod
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "5000"
+        prometheus.io/path: "/metrics"
+    spec:
+      containers:
+      - name: devops-app
+        image: masre/devops_project:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 5000
