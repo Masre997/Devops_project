@@ -1,15 +1,19 @@
 version: '3'
 services:
   jenkins:
-    image: jenkins/jenkins:lts
+    image: jenkins/jenkins:lts  # switched to latest LTS (newer Java/Certs)
     container_name: jenkins-devops
     user: root
-    privileged: true
-    network_mode: "host"     # <--- THE MAGIC FIX
+    privileged: true  # Grants permission to reach network hardware
+    ports:
+      - "8081:8080"
+      - "50000:50000"
     volumes:
       - ./jenkins_home:/var/jenkins_home
       - /var/run/docker.sock:/var/run/docker.sock
     environment:
+      # This DISABLES the "Getting Started" wizard completely
       - JAVA_OPTS=-Djenkins.install.runSetupWizard=false
     restart: always
+    
     
